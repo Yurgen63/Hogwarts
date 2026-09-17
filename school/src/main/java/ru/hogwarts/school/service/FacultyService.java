@@ -1,20 +1,16 @@
 package ru.hogwarts.school.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
-
 import java.util.List;
-import java.util.Optional;
-
 
 @Service
-public class FacultyService  {
+public class FacultyService {
 
     private final FacultyRepository facultyRepository;
 
-    @Autowired
     public FacultyService(FacultyRepository facultyRepository) {
         this.facultyRepository = facultyRepository;
     }
@@ -23,26 +19,33 @@ public class FacultyService  {
         return facultyRepository.save(faculty);
     }
 
-    public Optional<Faculty> getFaculty(Long id) {
-        return facultyRepository.findById(id);
+    public Faculty getFaculty(Long id) {
+        return facultyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Факультет с ID " + id + " не найден"));
     }
 
     public List<Faculty> getAllFaculties() {
         return facultyRepository.findAll();
     }
 
-    public Faculty updateFaculty(Faculty faculty) {
-        if (facultyRepository.existsById(faculty.getId())) {
-            return facultyRepository.save(faculty);
+    public List<Faculty> findFacultyByNameOrColor(String query) {
+        if (query == null || query.isBlank()) {
+            throw new IllegalArgumentException("Поисковый запрос не может быть пустым");
         }
-        return null;
+        return facultyRepository.findByNameIgnoreCaseOrColorIgnoreCase(query, query);
     }
 
-    public boolean deleteFaculty(Long id) {
-        if (facultyRepository.existsById(id)) {
-            facultyRepository.deleteById(id);
-            return true;
-        }
-        return false;
+    public List<Student> getFacultyStudents(Long facultyId) {
+        Faculty faculty = getFaculty(facultyId);
+        return faculty.getStudents();
     }
+
+    public Faculty updateFaculty(Faculty faculty) {
+        return facultyRepository.save(faculty);
+    }
+
+    public void deleteFaculty(Long id) {
+        facultyRepository.deleteById(id);
+    }
+
 }
