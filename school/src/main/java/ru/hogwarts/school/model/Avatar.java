@@ -1,8 +1,8 @@
 package ru.hogwarts.school.model;
-
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Type;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 @Entity
@@ -17,7 +17,7 @@ public class Avatar {
     private long fileSize;
     private String mediaType;
 
-    @Lob
+    @Column(name = "data", columnDefinition = "bytea")
     private byte[] data;
 
     @OneToOne

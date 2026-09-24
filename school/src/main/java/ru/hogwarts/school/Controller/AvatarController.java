@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.hogwarts.school.dto.AvatarDto;
 import ru.hogwarts.school.model.Avatar;
 import ru.hogwarts.school.service.AvatarService;
 
@@ -42,13 +43,9 @@ public class AvatarController {
             return ResponseEntity.notFound().build();
         }
 
-        String mediaType = avatar.getMediaType() != null
-                ? avatar.getMediaType()
-                : MediaType.APPLICATION_OCTET_STREAM_VALUE;
-
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(mediaType));
-        headers.setContentLength(avatar.getData() != null ? avatar.getData().length : 0);
+        headers.setContentType(MediaType.parseMediaType(avatar.getMediaType()));
+        headers.setContentLength(avatar.getFileSize());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -57,7 +54,7 @@ public class AvatarController {
     }
 
     @GetMapping
-    public Page<Avatar> getAvatars(
+    public Page<AvatarDto> getAvatars(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return avatarService.getAllAvatars(page, size);
