@@ -1,4 +1,5 @@
 package ru.hogwarts.school.model;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ public class Faculty {
     private String name, color;
 
     @OneToMany(mappedBy = "faculty")
+    @JsonManagedReference
     private List<Student> students = new ArrayList<>();
 
     public Faculty() {
@@ -55,15 +57,6 @@ public class Faculty {
 
     public void setColor(String color) {
         this.color = color;
-    }
-
-    @Override
-    public String toString() {
-        return "Faculty{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", color='" + color + '\'' +
-                '}';
     }
 
     @Override
