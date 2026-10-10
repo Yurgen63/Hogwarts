@@ -8,7 +8,7 @@ import ru.hogwarts.school.service.StudentService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/student")
+@RequestMapping("/students")
 public class StudentController {
     private final StudentService studentService;
 
@@ -33,7 +33,7 @@ public class StudentController {
         return studentService.getStudentsByAgeBetween(minAge, maxAge);
     }
 
-    @GetMapping("/{id}/faculty")
+    @GetMapping("/{id}/faculties")
     public Faculty getStudentFaculty(@PathVariable Long id) {
         return studentService.getStudentFaculty(id);
     }
@@ -70,4 +70,12 @@ public class StudentController {
     public List<Student> getLastFiveStudents() {
         return studentService.getLastFiveStudents();
     }
+
+    @GetMapping("/names-starting-with-a")
+    public List<String> getStudentNamesStartingWithA() {
+        return studentService.getStudentNamesStartingWithA();}
+
+    @GetMapping("/average-age-stream")
+    public double getAverageAgeStream() {
+        return studentService.getAverageAgeStream();}
 }

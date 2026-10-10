@@ -15,7 +15,7 @@ import ru.hogwarts.school.service.AvatarService;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/avatar")
+@RequestMapping("/avatars")
 public class AvatarController {
 
     private final AvatarService avatarService;
@@ -36,7 +36,7 @@ public class AvatarController {
         return ResponseEntity.status(HttpStatus.CREATED).body(avatar);
     }
 
-    @GetMapping("/student/{studentId}/data")
+    @GetMapping("/students/{studentId}/data")
     public ResponseEntity<byte[]> getAvatarData(@PathVariable Long studentId) {
         Avatar avatar = avatarService.getAvatarByStudentId(studentId);
         if (avatar == null) {

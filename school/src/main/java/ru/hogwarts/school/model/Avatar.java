@@ -1,8 +1,5 @@
 package ru.hogwarts.school.model;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import jakarta.persistence.*;
-import org.hibernate.annotations.Type;
-
 import java.util.Objects;
 
 @Entity
@@ -27,7 +24,6 @@ public class Avatar {
     public Avatar() {
     }
 
-    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
