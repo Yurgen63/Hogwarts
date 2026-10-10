@@ -7,6 +7,8 @@ import ru.hogwarts.school.exception.StudentNotFoundException;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.StudentRepository;
+
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -127,5 +129,142 @@ public class StudentService {
                 .mapToInt(Student::getAge)
                 .average()
                 .orElse(0.0);
+    }
+
+    public void printStudentsParallel() {
+        logger.info("Was invoked method for print students in parallel mode");
+
+        List<Student> students = studentRepository.findAll();
+
+        if (students.size() < 6) {
+            logger.warn("Not enough students for parallel printing. Found: {}", students.size());
+            System.out.println("Недостаточно студентов. Нужно минимум 6.");
+            return;
+        }
+
+        List<Student> firstSix = students.stream()
+                .sorted(Comparator.comparingLong(Student::getId))
+                .limit(6)
+                .toList();
+
+        System.out.println("=== Параллельный вывод (без синхронизации) ===");
+
+        // Основной поток — 1-й и 2-й студенты
+        System.out.println("--- Основной поток ---");
+        printStudentNameUnsynchronized(firstSix.get(0), "Основной");
+        printStudentNameUnsynchronized(firstSix.get(1), "Основной");
+
+        Thread thread1 = new Thread(() -> {
+            System.out.println("--- Поток-1 ---");
+            printStudentNameUnsynchronized(firstSix.get(2), "Поток-1");
+            printStudentNameUnsynchronized(firstSix.get(3), "Поток-1");
+        }, "Thread-1");
+
+        Thread thread2 = new Thread(() -> {
+            System.out.println("--- Поток-2 ---");
+            printStudentNameUnsynchronized(firstSix.get(4), "Поток-2");
+            printStudentNameUnsynchronized(firstSix.get(5), "Поток-2");
+        }, "Thread-2");
+
+        thread1.start();
+        thread2.start();
+
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            logger.error("Thread interrupted", e);
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println("=== Все параллельные потоки завершены ===");
+    }
+
+    /**
+     * Выводит имя и ID студента БЕЗ синхронизации.
+     * Разбито на несколько print + sleep, чтобы показать гонку потоков.
+     */
+    private void printStudentNameUnsynchronized(Student student, String threadName) {
+        System.out.print(threadName + ": " + student.getName());
+        sleepQuietly(5);                       // имитация долгой работы
+        System.out.println(" (ID: " + student.getId() + ")");
+    }
+
+    private void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void printStudentName(Student student, String threadName) {
+        System.out.println(threadName + ": " + student.getName() + " (ID: " + student.getId() + ")");
+    }
+
+    private final Object printLock = new Object();
+
+    private void synchronizedPrintStudentName(Student student, String threadName) {
+        synchronized (printLock) {
+            System.out.println(threadName + ": " + student.getName() + " (ID: " + student.getId() + ")");
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    public void printStudentsSynchronized() {
+        logger.info("Was invoked method for print students in synchronized mode");
+
+        List<Student> students = studentRepository.findAll();
+
+        if (students.size() < 6) {
+            logger.warn("Not enough students for synchronized printing. Found: {}", students.size());
+            System.out.println("Недостаточно студентов. Нужно минимум 6.");
+            return;
+        }
+
+        List<Student> firstSix = students.stream()
+                .sorted(Comparator.comparingLong(Student::getId))
+                .limit(6)
+                .toList();
+
+        Object lock = new Object();
+
+        System.out.println("=== Синхронизированный вывод ===");
+
+        Thread mainThread = Thread.currentThread();
+
+        printBlockSynchronized(lock, "Основной", firstSix.get(0), firstSix.get(1));
+
+        Thread thread1 = new Thread(() ->
+                printBlockSynchronized(lock, "Поток-1", firstSix.get(2), firstSix.get(3)));
+
+        Thread thread2 = new Thread(() ->
+                printBlockSynchronized(lock, "Поток-2", firstSix.get(4), firstSix.get(5)));
+
+        thread1.start();
+        thread2.start();
+
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            logger.error("Thread interrupted", e);
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println("=== Все синхронизированные потоки завершены ===");
+    }
+
+    private void printBlockSynchronized(Object lock, String threadName, Student s1, Student s2) {
+        synchronized (lock) {
+            System.out.println("--- " + threadName + " ---");
+            System.out.println(threadName + ": " + s1.getName() + " (ID: " + s1.getId() + ")");
+            sleepQuietly(10);
+            System.out.println(threadName + ": " + s2.getName() + " (ID: " + s2.getId() + ")");
+        }
     }
 }
