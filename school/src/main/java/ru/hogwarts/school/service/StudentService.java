@@ -117,8 +117,8 @@ public class StudentService {
         return studentRepository.findAll().stream()
                 .map(Student::getName)
                 .filter(name -> name != null && !name.isEmpty())
-                .filter(name -> name.toUpperCase().startsWith("А"))
                 .map(String::toUpperCase)
+                .filter(name -> name.startsWith("А"))
                 .sorted()
                 .collect(Collectors.toList());
     }
@@ -150,7 +150,6 @@ public class StudentService {
 
         System.out.println("=== Параллельный вывод (без синхронизации) ===");
 
-        // Параллельная обработка через parallelStream + Stream.iterate
         Stream.iterate(0, i -> i + 1)
                 .limit(firstSix.size())
                 .parallel()
