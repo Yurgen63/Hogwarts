@@ -11,6 +11,7 @@ import ru.hogwarts.school.repository.StudentRepository;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class StudentService {
@@ -149,41 +150,19 @@ public class StudentService {
 
         System.out.println("=== Параллельный вывод (без синхронизации) ===");
 
-        // Основной поток — 1-й и 2-й студенты
-        System.out.println("--- Основной поток ---");
-        printStudentNameUnsynchronized(firstSix.get(0), "Основной");
-        printStudentNameUnsynchronized(firstSix.get(1), "Основной");
-
-        Thread thread1 = new Thread(() -> {
-            System.out.println("--- Поток-1 ---");
-            printStudentNameUnsynchronized(firstSix.get(2), "Поток-1");
-            printStudentNameUnsynchronized(firstSix.get(3), "Поток-1");
-        }, "Thread-1");
-
-        Thread thread2 = new Thread(() -> {
-            System.out.println("--- Поток-2 ---");
-            printStudentNameUnsynchronized(firstSix.get(4), "Поток-2");
-            printStudentNameUnsynchronized(firstSix.get(5), "Поток-2");
-        }, "Thread-2");
-
-        thread1.start();
-        thread2.start();
-
-        try {
-            thread1.join();
-            thread2.join();
-        } catch (InterruptedException e) {
-            logger.error("Thread interrupted", e);
-            Thread.currentThread().interrupt();
-        }
+        // Параллельная обработка через parallelStream + Stream.iterate
+        Stream.iterate(0, i -> i + 1)
+                .limit(firstSix.size())
+                .parallel()
+                .forEach(index -> {
+                    String threadName = Thread.currentThread().getName();
+                    String groupLabel = index < 2 ? "Основной" : (index < 4 ? "Поток-1" : "Поток-2");
+                    printStudentNameUnsynchronized(firstSix.get(index), groupLabel);
+                });
 
         System.out.println("=== Все параллельные потоки завершены ===");
     }
 
-    /**
-     * Выводит имя и ID студента БЕЗ синхронизации.
-     * Разбито на несколько print + sleep, чтобы показать гонку потоков.
-     */
     private void printStudentNameUnsynchronized(Student student, String threadName) {
         System.out.print(threadName + ": " + student.getName());
         sleepQuietly(5);                       // имитация долгой работы
